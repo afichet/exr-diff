@@ -1,7 +1,10 @@
 # EXR Diff
 
-This is a very simple tool to generate Delta E 2000 image difference between two EXR files.
-It is meant to be compile easily without headache on any platform.
+This is a very simple tool to generate a Delta E 2000 image difference between two EXR files.
+
+It is meant to be compiled easily without any headache on any platform.
+
+It is **not** meant to be fancy or bloated.
 
 ## Compilation
 Clone the repository:
@@ -42,7 +45,7 @@ diff-exr <exr_image_1> <exr_image_2> -o <image_diff_png>
 
 To see all available options, use `-h` without extra arguments.
 
-# License
+## License
 
 This tool uses the following Open Source libraries:
 - TinyEXR https://github.com/syoyo/tinyexr
