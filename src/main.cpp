@@ -1,11 +1,14 @@
 #include <iostream>
 #include "colortools.hpp"
-#include "colormap.hpp"
+// #include "colormap.hpp"
 
 #define TINYEXR_IMPLEMENTATION
 #include <tinyexr.h>
 #include <lodepng.h>
 #include <tclap/CmdLine.h>
+
+#include "ColorMap/TabulatedColorMap.hpp"
+#include "ColorMap/BBGRColorMap.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -21,6 +24,8 @@ int main(int argc, char* argv[])
   const char* err = nullptr;
   int ret = TINYEXR_SUCCESS;
 
+  ColorMap* cmap = nullptr;
+
   try {
     TCLAP::CmdLine cmd("Difference tool for OpenEXR files", ' ', "0.1");
 
@@ -28,9 +33,10 @@ int main(int argc, char* argv[])
     TCLAP::UnlabeledValueArg<std::string> file_2Arg("file2", "File 2", true, "input_2.exr", "input file 2");
 
     TCLAP::ValueArg<std::string> fileoutArg("o", "output", "Output file", true, "out.png", "string");
-    TCLAP::SwitchArg scaleSwitch("s", "scale", "Add a scale next to the difference.", cmd, false);
-	  TCLAP::ValueArg<float> maxArg("m","max","Max value to use for Delta E 2000", false, 10.f , "Float");
-	  TCLAP::ValueArg<float> exposureArg("e","exposure","Set the exposure compensation value to use for input files", false, 0.f , "Float");
+    TCLAP::SwitchArg             scaleSwitch("s", "scale", "Add a scale next to the difference.", cmd, false);
+	  TCLAP::ValueArg<float>       maxArg("m","max","Max value to use for Delta E 2000", false, 10.f , "Float");
+	  TCLAP::ValueArg<float>       exposureArg("e","exposure","Set the exposure compensation value to use for input files", false, 0.f , "Float");
+    TCLAP::ValueArg<std::string> colormapArg("c", "colormap", "Color map to use", false, "inferno", "magma, inferno, plasma, viridis");
 
     cmd.add(file_1Arg);
     cmd.add(file_2Arg);
@@ -38,6 +44,7 @@ int main(int argc, char* argv[])
     cmd.add(fileoutArg);
     cmd.add(maxArg);
     cmd.add(exposureArg);
+    cmd.add(colormapArg);
 
     cmd.parse(argc, argv);
 
@@ -47,6 +54,7 @@ int main(int argc, char* argv[])
     const float max_deltaE = maxArg.getValue();
     const bool displayScale = scaleSwitch.getValue();
     const float exposure = exposureArg.getValue();
+    const char* colormap = colormapArg.getValue().c_str();
 
     // Load the two EXR files to compare
     ret = LoadEXR(&rgba_1, &width_1, &height_1, file_1, &err);
@@ -82,7 +90,21 @@ int main(int argc, char* argv[])
       ret_val = -1;
       goto clean_exit;
     }
-    
+
+    // Create the colormap
+    try {
+      if (strcmp(colormap, "bbgr") == 0) {
+        cmap = new BBGRColorMap();
+      } else {
+        cmap = new TabulatedColorMap(colormap);
+      }
+    } catch (int e) {
+      std::cerr << "[error] Cannot create the colormap." << std::endl;
+      
+      ret_val = -1;
+      goto clean_exit;
+    }
+
     {
       const int width = width_1;
       const int height = height_1;
@@ -119,7 +141,7 @@ int main(int argc, char* argv[])
 
           // Find a color maping for the Delta E value
           float scale_rgb[3];
-          getRGB(deltaE, 0, max_deltaE, scale_rgb);
+          cmap->getRGBValue(deltaE, 0.f, max_deltaE, scale_rgb);
           
           // Set the output file pixel values
           for (int c = 0; c < 3; c++) {
@@ -135,7 +157,7 @@ int main(int argc, char* argv[])
         for (int y = 0; y < height; y++) {
           float v = float(height - y) / float(height - 1);
           float scale_rgb[3];
-          getRGB(v, 0, 1, scale_rgb);
+          cmap->getRGBValue(v, scale_rgb);
 
           for (int x = width; x < width_out; x++) {
             for (int c = 0; c < 3; c++) {
@@ -156,6 +178,7 @@ clean_exit:
   free(rgba_1); // release memory of image data
   free(rgba_2); // release memory of image data
   delete[] rgb_out;
+  delete cmap;
 
   return ret_val;
 }

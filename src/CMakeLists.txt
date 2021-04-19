@@ -15,4 +15,5 @@ target_include_directories(diff-exr PRIVATE
     "../3rdparty/tinyexr"
     "../3rdparty/lodepng"
     "../3rdparty/tclap/include"
+    "../3rdparty/data"
     )
