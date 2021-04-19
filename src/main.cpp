@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
         }
       }
 
-      unsigned int err_encode = lodepng::encode(file_out, rgb_out, width_out, height);
+      lodepng::encode(file_out, rgb_out, width_out, height);
     }
   } catch (TCLAP::ArgException &e) { 
     std::cerr << "[error] " << e.error() << " for arg " << e.argId() << std::endl; 

@@ -30,6 +30,8 @@
 
 #include "ColorMap.hpp"
 
+#include <cstddef>
+
 class BBGRColorMap: public ColorMap
 {
 public:
@@ -53,15 +55,15 @@ public:
 
         std::vector<float> values(scale.size());
 
-        for (int i = 0; i < scale.size(); i++) {
+        for (size_t i = 0; i < scale.size(); i++) {
             values[i] = float(i) / float(scale.size() - 1);
         }
 
-        for (int i = 1; i < scale.size(); i++) {
+        for (size_t i = 1; i < scale.size(); i++) {
             if (v <= values[i]) {
                 float interp = place(v, values[i - 1], values[i]);
 
-                for (int c = 0; c < 3; c++) {
+                for (size_t c = 0; c < 3; c++) {
                     RGB[c] = interp * scale[i][c] 
                         + (1.f - interp) * scale[i - 1][c];
                 }
@@ -70,7 +72,7 @@ public:
             }
         }
 
-        for (int c = 0; c < 3; c++) {
+        for (size_t c = 0; c < 3; c++) {
             RGB[c] = scale[scale.size() - 1][c];
         }
     }
