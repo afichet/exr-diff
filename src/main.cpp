@@ -186,8 +186,6 @@ int main(int argc, char *argv[])
 
         rgb_out = new unsigned char[width_out * height * 4];
 
-        const float exposure_mul = std::exp2(exposure);
-
         #pragma omp parallel for
         for (size_t i = 0; i < width * height; i++) {
             const size_t x          = i % width;
@@ -217,12 +215,12 @@ int main(int argc, char *argv[])
         // If we use a color scale on the right, add it to the output image
         if (displayScale) {
             #pragma omp parallel for
-            for (int y = 0; y < height; y++) {
+            for (size_t y = 0; y < height; y++) {
                 float v = float(height - 1 - y) / float(height - 1);
                 float scale_rgb[3];
                 cmap->getRGBValue(v, scale_rgb);
 
-                for (int x = width; x < width_out; x++) {
+                for (size_t x = width; x < width_out; x++) {
                     for (int c = 0; c < 3; c++) {
                         rgb_out[4 * (y * width_out + x) + c]
                             = 255 * scale_rgb[c];

@@ -18,8 +18,9 @@ target_include_directories(diff-exr PRIVATE
     )
 
 find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(diff-exr PUBLIC OpenMP::OpenMP_CXX)
+if((OpenMP_CXX_FOUND) OR (OpenMP_FOUND))
+target_link_libraries(diff-exr PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(diff-exr PUBLIC OpenMP::OpenMP_C)
 endif()
 
 
