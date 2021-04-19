@@ -52,5 +52,7 @@ This tool uses the following Open Source libraries:
 - LodePNG https://lodev.org/lodepng/
 - TCLAP http://tclap.sourceforge.net/
 
+It also uses the colormaps from https://bids.github.io/colormap/ by Nathaniel J. Smith, Stefan van der Walt, and (in the case of viridis) Eric Firing. These are licensed under CC0 license (http://creativecommons.org/publicdomain/zero/1.0/).
+
 It is licensed under the 3-clause BSD license.
 

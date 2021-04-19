@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     TCLAP::SwitchArg             scaleSwitch("s", "scale", "Add a scale next to the difference.", cmd, false);
 	  TCLAP::ValueArg<float>       maxArg("m","max","Max value to use for Delta E 2000", false, 10.f , "Float");
 	  TCLAP::ValueArg<float>       exposureArg("e","exposure","Set the exposure compensation value to use for input files", false, 0.f , "Float");
-    TCLAP::ValueArg<std::string> colormapArg("c", "colormap", "Color map to use", false, "inferno", "magma, inferno, plasma, viridis");
+    TCLAP::ValueArg<std::string> colormapArg("c", "colormap", "Color map to use", false, "bbgr", "bbgr, magma, inferno, plasma, viridis");
 
     cmd.add(file_1Arg);
     cmd.add(file_2Arg);
