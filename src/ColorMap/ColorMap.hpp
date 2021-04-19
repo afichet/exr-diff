@@ -34,6 +34,8 @@ class ColorMap
 public:
     ColorMap() {}
 
+    virtual ~ColorMap() {}
+
     virtual void getRGBValue(float v, float RGB[3]) const = 0;
 
     virtual void getRGBValue(float v, float v_min, float v_max, float RGB[3]) const = 0;

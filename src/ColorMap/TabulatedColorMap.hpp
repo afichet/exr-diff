@@ -33,11 +33,14 @@
 #include <vector>
 #include <cstring>
 
+#include <cassert>
+
 class TabulatedColorMap: public ColorMap 
 {
 public:
     TabulatedColorMap()
-        : _array(1)
+        : _array(3)
+        , _n_elems(1)
     {}
 
     TabulatedColorMap(const char* name)
@@ -59,9 +62,23 @@ public:
         }
     }
 
+    virtual ~TabulatedColorMap()
+    {
+
+    }
+
     virtual void getRGBValue(float v, float RGB[3]) const 
     {
-        int closet_idx = v * (_array.size()/3 - 1);
+        v = std::max(0.f, std::min(1.f, v));
+
+        assert(v >= 0.f);
+        assert(v <= 1.f);
+
+        int closet_idx = v * (_n_elems - 1);
+
+        assert(closet_idx < _n_elems);
+        assert(closet_idx >= 0);
+
         memcpy(RGB, &_array[3 * closet_idx], 3 * sizeof(float));
     }
 
@@ -75,8 +92,10 @@ protected:
     {
         _array.resize(3 * n_elems);
         memcpy(_array.data(), array, 3 * n_elems * sizeof(float));
+        _n_elems = n_elems;
     }
 
 private:
     std::vector<float> _array;
+    int _n_elems;
 };
