@@ -33,21 +33,22 @@
 
 class ImageModule
 {
-    public:
-    static XYZImage* load(const std::string &filename, float exposure = 0.f) 
+  public:
+    static XYZImage *load(const std::string &filename, float exposure = 0.f)
     {
         // Check if the filename size is long enough
         if (filename.size() < 5) {
             throw -1;
         }
 
-        const char* filename_ext = &filename.c_str()[filename.size() - 4];
+        const char *filename_ext = &filename.c_str()[filename.size() - 4];
 
-        if (strcmp(filename_ext, ".exr") == 0 
-         || strcmp(filename_ext, ".EXR") == 0) {
-             return new EXRImageFormat(filename.c_str(), exposure);
+        if (strcmp(filename_ext, ".exr") == 0
+            || strcmp(filename_ext, ".EXR") == 0) {
+            return new EXRImageFormat(filename.c_str(), exposure);
         } else {
-            std::cerr << "[error] Unknown file format " << filename_ext << std::endl;
+            std::cerr << "[error] Unknown file format " << filename_ext
+                      << std::endl;
             std::cerr << "[error] Image name: " << filename << std::endl;
             throw -2;
         }

@@ -36,14 +36,14 @@
 
 class EXRImageFormat: public XYZImage
 {
-public:
-    EXRImageFormat(const char* filename, float exposureValue = 0.f)
-        : XYZImage(0, 0)
+  public:
+    EXRImageFormat(const char *filename, float exposureValue = 0.f)
+      : XYZImage(0, 0)
     {
-        float * rgba = nullptr;
-        int width, height;
-        const char* err = nullptr;
-        int ret = LoadEXR(&rgba, &width, &height, filename, &err);
+        float *     rgba = nullptr;
+        int         width, height;
+        const char *err = nullptr;
+        int         ret = LoadEXR(&rgba, &width, &height, filename, &err);
 
         if (ret != TINYEXR_SUCCESS) {
             std::cerr << "[error] cannot load file: " << filename << std::endl;

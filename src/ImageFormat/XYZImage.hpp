@@ -33,13 +33,13 @@
 
 class XYZImage
 {
-public:
+  public:
     XYZImage(size_t width, size_t height)
-        : _width(width)
-        , _height(height)
-        , _pXyzBuffer(3 * width * height)
+      : _width(width)
+      , _height(height)
+      , _pXyzBuffer(3 * width * height)
     {}
-    
+
 
     virtual ~XYZImage() {}
 
@@ -50,18 +50,15 @@ public:
 
     void resize(size_t width, size_t height)
     {
-        _width = width;
+        _width  = width;
         _height = height;
         _pXyzBuffer.resize(3 * width * height);
     }
 
 
-    float* data_xyz() {
-        return _pXyzBuffer.data();
-    }
+    float *data_xyz() { return _pXyzBuffer.data(); }
 
-protected:
-    size_t _width, _height;
+  protected:
+    size_t             _width, _height;
     std::vector<float> _pXyzBuffer;
-
 };

@@ -35,16 +35,13 @@
 
 #include <cassert>
 
-class TabulatedColorMap: public ColorMap 
+class TabulatedColorMap: public ColorMap
 {
-public:
-    TabulatedColorMap()
-        : _array(3)
-        , _n_elems(1)
-    {}
+  public:
+    TabulatedColorMap(): _array(3), _n_elems(1) {}
 
 
-    TabulatedColorMap(const char* name)
+    TabulatedColorMap(const char *name)
     {
         if (strcmp(name, "magma") == 0) {
             init(magma_data, 256);
@@ -55,9 +52,10 @@ public:
         } else if (strcmp(name, "viridis") == 0) {
             init(viridis_data, 256);
         } else {
-            std::cerr 
-            << "[error] unknown color map." << std::endl
-            << "[error] You can choose between magma, inferno, plasma or viridis." << std::endl;
+            std::cerr << "[error] unknown color map." << std::endl
+                      << "[error] You can choose between magma, inferno, "
+                         "plasma or viridis."
+                      << std::endl;
 
             throw -1;
         }
@@ -67,7 +65,7 @@ public:
     virtual ~TabulatedColorMap() {}
 
 
-    virtual void getRGBValue(float v, float RGB[3]) const 
+    virtual void getRGBValue(float v, float RGB[3]) const
     {
         v = std::max(0.f, std::min(1.f, v));
 
@@ -83,20 +81,21 @@ public:
     }
 
 
-    virtual void getRGBValue(float v, float v_min, float v_max, float RGB[3]) const 
+    virtual void
+    getRGBValue(float v, float v_min, float v_max, float RGB[3]) const
     {
         getRGBValue((v - v_min) / (v_max - v_min), RGB);
     }
 
-protected:
-    void init(float * array, int n_elems) 
+  protected:
+    void init(float *array, int n_elems)
     {
         _array.resize(3 * n_elems);
         memcpy(_array.data(), array, 3 * n_elems * sizeof(float));
         _n_elems = n_elems;
     }
 
-private:
+  private:
     std::vector<float> _array;
-    int _n_elems;
+    int                _n_elems;
 };
