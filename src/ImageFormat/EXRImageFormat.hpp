@@ -60,6 +60,7 @@ public:
         // Now allocate memory and conver to XYZ colorspace
         resize(width, height);
 
+        #pragma omp parallel for
         for (size_t i = 0; i < width * height; i++) {
             for (int c = 0; c < 3; c++) {
                 rgba[4 * i + c] *= exposure_mul;

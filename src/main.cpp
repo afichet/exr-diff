@@ -27,6 +27,7 @@
 //
 
 #include <iostream>
+#include <cstddef>
 #include "colortools.hpp"
 
 #include <lodepng.h>
@@ -175,46 +176,47 @@ int main(int argc, char *argv[])
     }
 
     {
-        const int width  = image_1->width();
-        const int height = image_1->height();
+        const size_t width  = image_1->width();
+        const size_t height = image_1->height();
 
         // We need to determine the width of the output image depending on the
         // display of the color scale on the right or not
-        const int width_scale = 30;
-        const int width_out   = (displayScale) ? width + width_scale : width;
+        const size_t width_scale = 30;
+        const size_t width_out   = (displayScale) ? width + width_scale : width;
 
         rgb_out = new unsigned char[width_out * height * 4];
 
         const float exposure_mul = std::exp2(exposure);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                const int offset_in  = y * width + x;
-                const int offset_out = y * width_out + x;
+        #pragma omp parallel for
+        for (size_t i = 0; i < width * height; i++) {
+            const size_t x          = i % width;
+            const size_t y          = i / width;
+            const size_t offset_out = y * width_out + x;
 
-                // Convert colors to Lab space
-                float Lab_1[3], Lab_2[3];
-                xyz_to_Lab(&image_1->data_xyz()[3 * offset_in], Lab_1);
-                xyz_to_Lab(&image_2->data_xyz()[3 * offset_in], Lab_2);
+            // Convert colors to Lab space
+            float Lab_1[3], Lab_2[3];
+            xyz_to_Lab(&image_1->data_xyz()[3 * i], Lab_1);
+            xyz_to_Lab(&image_2->data_xyz()[3 * i], Lab_2);
 
-                // Compute the Delta E 2000 difference
-                const float deltaE = deltaE2000(Lab_1, Lab_2);
+            // Compute the Delta E 2000 difference
+            const float deltaE = deltaE2000(Lab_1, Lab_2);
 
-                // Find a color maping for the Delta E value
-                float scale_rgb[3];
-                cmap->getRGBValue(deltaE, 0.f, max_deltaE, scale_rgb);
+            // Find a color maping for the Delta E value
+            float scale_rgb[3];
+            cmap->getRGBValue(deltaE, 0.f, max_deltaE, scale_rgb);
 
-                // Set the output file pixel values
-                for (int c = 0; c < 3; c++) {
-                    rgb_out[4 * offset_out + c] = 255 * scale_rgb[c];
-                }
-
-                rgb_out[4 * offset_out + 3] = 255;
+            // Set the output file pixel values
+            for (int c = 0; c < 3; c++) {
+                rgb_out[4 * offset_out + c] = 255 * scale_rgb[c];
             }
+
+            rgb_out[4 * offset_out + 3] = 255;
         }
 
         // If we use a color scale on the right, add it to the output image
         if (displayScale) {
+            #pragma omp parallel for
             for (int y = 0; y < height; y++) {
                 float v = float(height - 1 - y) / float(height - 1);
                 float scale_rgb[3];
