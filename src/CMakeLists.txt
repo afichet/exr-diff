@@ -17,3 +17,10 @@ target_include_directories(diff-exr PRIVATE
     "../3rdparty/tclap/include"
     "../3rdparty/data"
     )
+
+
+if (MSVC)
+    target_compile_options(diff-exr PUBLIC /W3)
+else()
+    target_compile_options(diff-exr PUBLIC -Wall -Wextra -Wpedantic)
+endif()
