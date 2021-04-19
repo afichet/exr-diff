@@ -43,6 +43,7 @@ public:
         , _n_elems(1)
     {}
 
+
     TabulatedColorMap(const char* name)
     {
         if (strcmp(name, "magma") == 0) {
@@ -62,10 +63,9 @@ public:
         }
     }
 
-    virtual ~TabulatedColorMap()
-    {
 
-    }
+    virtual ~TabulatedColorMap() {}
+
 
     virtual void getRGBValue(float v, float RGB[3]) const 
     {
@@ -81,6 +81,7 @@ public:
 
         memcpy(RGB, &_array[3 * closet_idx], 3 * sizeof(float));
     }
+
 
     virtual void getRGBValue(float v, float v_min, float v_max, float RGB[3]) const 
     {

@@ -32,167 +32,213 @@
 #include <lodepng.h>
 #include <tclap/CmdLine.h>
 
-#include "ColorMap/TabulatedColorMap.hpp"
-#include "ColorMap/BBGRColorMap.hpp"
+#include "ImageFormat/ImageModule.hpp"
+#include "ColorMap/ColorMapModule.hpp"
 
-#include "ImageFormat/EXRImageFormat.hpp"
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-  int ret_val = 0;
+    int ret_val = 0;
 
-  std::string filename_1;
-  std::string filename_2;
-  std::string filename_out;
+    std::string filename_1;
+    std::string filename_2;
+    std::string filename_out;
 
-  std::string colormap_name;
+    std::string colormap_name;
 
-  float max_deltaE;
-  float exposure;
-  bool displayScale;
+    float max_deltaE;
+    float exposure;
+    bool  displayScale;
 
-  XYZImage *image_1 = nullptr;
-  XYZImage *image_2 = nullptr;
+    XYZImage *image_1 = nullptr;
+    XYZImage *image_2 = nullptr;
 
-  unsigned char *rgb_out = nullptr;
+    ColorMap *cmap = nullptr;
 
-  ColorMap* cmap = nullptr;
+    unsigned char *rgb_out = nullptr;
 
-  try {
-    TCLAP::CmdLine cmd("Difference tool for OpenEXR files", ' ', "0.1");
+    // Parse command line
+    try {
+        TCLAP::CmdLine cmd("Difference tool for OpenEXR files", ' ', "0.1");
 
-    TCLAP::UnlabeledValueArg<std::string> file_1Arg("file1", "File 1", true, "input_1.exr", "input file 1");
-    TCLAP::UnlabeledValueArg<std::string> file_2Arg("file2", "File 2", true, "input_2.exr", "input file 2");
+        TCLAP::UnlabeledValueArg<std::string>
+            file_1Arg("file1", "File 1", true, "input_1.exr", "input file 1");
+        TCLAP::UnlabeledValueArg<std::string>
+            file_2Arg("file2", "File 2", true, "input_2.exr", "input file 2");
 
-    TCLAP::ValueArg<std::string> fileoutArg("o", "output", "Output file", true, "out.png", "string");
-    TCLAP::SwitchArg             scaleSwitch("s", "scale", "Add a scale next to the difference.", cmd, false);
-	  TCLAP::ValueArg<float>       maxArg("m","max","Max value to use for Delta E 2000", false, 10.f , "Float");
-	  TCLAP::ValueArg<float>       exposureArg("e","exposure","Set the exposure compensation value to use for input files", false, 0.f , "Float");
-    TCLAP::ValueArg<std::string> colormapArg("c", "colormap", "Color map to use", false, "bbgr", "bbgr, magma, inferno, plasma, viridis");
+        TCLAP::ValueArg<std::string>
+            fileoutArg("o", "output", "Output file", true, "out.png", "string");
+        TCLAP::SwitchArg scaleSwitch(
+            "s",
+            "scale",
+            "Add a scale next to the difference.",
+            cmd,
+            false);
+        TCLAP::ValueArg<float> maxArg(
+            "m",
+            "max",
+            "Max value to use for Delta E 2000",
+            false,
+            10.f,
+            "Float");
+        TCLAP::ValueArg<float> exposureArg(
+            "e",
+            "exposure",
+            "Set the exposure compensation value to use for input files",
+            false,
+            0.f,
+            "Float");
+        TCLAP::ValueArg<std::string> colormapArg(
+            "c",
+            "colormap",
+            "Color map to use",
+            false,
+            "bbgr",
+            "bbgr, magma, inferno, plasma, viridis");
 
-    cmd.add(file_1Arg);
-    cmd.add(file_2Arg);
+        cmd.add(file_1Arg);
+        cmd.add(file_2Arg);
 
-    cmd.add(fileoutArg);
-    cmd.add(maxArg);
-    cmd.add(exposureArg);
-    cmd.add(colormapArg);
+        cmd.add(fileoutArg);
+        cmd.add(maxArg);
+        cmd.add(exposureArg);
+        cmd.add(colormapArg);
 
-    cmd.parse(argc, argv);
+        cmd.parse(argc, argv);
 
-    filename_1    = file_1Arg.getValue();
-    filename_2    = file_2Arg.getValue();
-    filename_out  = fileoutArg.getValue();
+        filename_1    = file_1Arg.getValue();
+        filename_2    = file_2Arg.getValue();
+        filename_out  = fileoutArg.getValue();
+        colormap_name = colormapArg.getValue();
 
-    exposure      = exposureArg.getValue();
-    max_deltaE    = maxArg.getValue();
-    displayScale  = scaleSwitch.getValue();
-    colormap_name = colormapArg.getValue();
-  } catch (TCLAP::ArgException &e) { 
-    std::cerr << "[error] " << e.error() << " for arg " << e.argId() << std::endl;
-        
-    ret_val = -1;
-    goto clean_exit;
-  }
+        max_deltaE   = maxArg.getValue();
+        exposure     = exposureArg.getValue();
+        displayScale = scaleSwitch.getValue();
+    } catch (TCLAP::ArgException &e) {
+        std::cerr << "[error] " << e.error() << " for arg " << e.argId()
+                  << std::endl;
 
-  // Load the two EXR files to compare
-  try {
-    image_1 = new EXRImageFormat(filename_1.c_str(), exposure);
-    image_2 = new EXRImageFormat(filename_2.c_str(), exposure);
-  } catch(int e) {
-    std::cerr << "[error] Cannot load images." << std::endl;
-    
-    ret_val = -1;
-    goto clean_exit;
-  }
-
-  // Ensure they have the same dimensions
-  if (image_1->width() != image_2->width() 
-  ||  image_2->height() != image_2->height()) {
-    std::cerr << "[error] Image dimensions mismatch." << std::endl;
-
-    ret_val = -1;
-    goto clean_exit;
-  }
-
-  // Create the colormap
-  try {
-    if (strcmp(colormap_name.c_str(), "bbgr") == 0) {
-      cmap = new BBGRColorMap();
-    } else {
-      cmap = new TabulatedColorMap(colormap_name.c_str());
+        ret_val = -1;
+        goto clean_exit;
     }
-  } catch (int e) {
-    std::cerr << "[error] Cannot create the colormap." << std::endl;
-    
-    ret_val = -1;
-    goto clean_exit;
-  }
 
-  {
-    const int width  = image_1->width();
-    const int height = image_1->height();
+    // Ensure the output file is in a PNG format
+    if (filename_out.size() < 5) {
+        std::cerr << "[error] Wrong output filename: too short" << std::endl;
+        ret_val = -2;
+        goto clean_exit;
+    }
 
-    // We need to determine the width of the output image depending on the
-    // display of the color scale on the right or not
-    const int width_scale = 30;
-    const int width_out = (displayScale) ? width + width_scale : width;
+    {
+        const char *filename_out_ext
+            = &filename_out.c_str()[filename_out.size() - 4];
 
-    rgb_out = new unsigned char[width_out * height * 4];
+        if (strcmp(filename_out_ext, ".png") != 0
+            && strcmp(filename_out_ext, ".PNG") != 0) {
+            std::cerr << "[error] Wrong file extension for output."
+                      << std::endl;
+            std::cerr << "[error] Supported extensions: .png, .PNG"
+                      << std::endl;
 
-    const float exposure_mul = std::exp2(exposure);
+            ret_val = -3;
+            goto clean_exit;
+        }
+    }
 
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        const int offset_in  = y * width + x;
-        const int offset_out = y * width_out + x;
+    // Load the two EXR files to compare
+    try {
+        image_1 = ImageModule::load(filename_1.c_str(), exposure);
+        image_2 = ImageModule::load(filename_2.c_str(), exposure);
+    } catch (int e) {
+        std::cerr << "[error] Cannot load images." << std::endl;
 
-        // Convert colors to Lab space
-        float Lab_1[3], Lab_2[3];
-        xyz_to_Lab(&image_1->data_xyz()[3 * offset_in], Lab_1);
-        xyz_to_Lab(&image_2->data_xyz()[3 * offset_in], Lab_2);
+        ret_val = -1;
+        goto clean_exit;
+    }
 
-        // Compute the Delta E 2000 difference
-        const float deltaE = deltaE2000(Lab_1, Lab_2);
+    // Ensure they have the same dimensions
+    if (image_1->width() != image_2->width()
+        || image_2->height() != image_2->height()) {
+        std::cerr << "[error] Image dimensions mismatch." << std::endl;
 
-        // Find a color maping for the Delta E value
-        float scale_rgb[3];
-        cmap->getRGBValue(deltaE, 0.f, max_deltaE, scale_rgb);
-        
-        // Set the output file pixel values
-        for (int c = 0; c < 3; c++) {
-          rgb_out[4 * offset_out + c] = 255 * scale_rgb[c];
+        ret_val = -1;
+        goto clean_exit;
+    }
+
+    // Create the colormap
+    try {
+        cmap = ColorMapModule::create(colormap_name);
+    } catch (int e) {
+        std::cerr << "[error] Cannot create the colormap." << std::endl;
+
+        ret_val = -1;
+        goto clean_exit;
+    }
+
+    {
+        const int width  = image_1->width();
+        const int height = image_1->height();
+
+        // We need to determine the width of the output image depending on the
+        // display of the color scale on the right or not
+        const int width_scale = 30;
+        const int width_out   = (displayScale) ? width + width_scale : width;
+
+        rgb_out = new unsigned char[width_out * height * 4];
+
+        const float exposure_mul = std::exp2(exposure);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                const int offset_in  = y * width + x;
+                const int offset_out = y * width_out + x;
+
+                // Convert colors to Lab space
+                float Lab_1[3], Lab_2[3];
+                xyz_to_Lab(&image_1->data_xyz()[3 * offset_in], Lab_1);
+                xyz_to_Lab(&image_2->data_xyz()[3 * offset_in], Lab_2);
+
+                // Compute the Delta E 2000 difference
+                const float deltaE = deltaE2000(Lab_1, Lab_2);
+
+                // Find a color maping for the Delta E value
+                float scale_rgb[3];
+                cmap->getRGBValue(deltaE, 0.f, max_deltaE, scale_rgb);
+
+                // Set the output file pixel values
+                for (int c = 0; c < 3; c++) {
+                    rgb_out[4 * offset_out + c] = 255 * scale_rgb[c];
+                }
+
+                rgb_out[4 * offset_out + 3] = 255;
+            }
         }
 
-        rgb_out[4 * offset_out + 3] = 255;
-      }
-    }
+        // If we use a color scale on the right, add it to the output image
+        if (displayScale) {
+            for (int y = 0; y < height; y++) {
+                float v = float(height - 1 - y) / float(height - 1);
+                float scale_rgb[3];
+                cmap->getRGBValue(v, scale_rgb);
 
-    // If we use a color scale on the right, add it to the output image
-    if (displayScale) {
-      for (int y = 0; y < height; y++) {
-        float v = float(height - 1 - y) / float(height - 1);
-        float scale_rgb[3];
-        cmap->getRGBValue(v, scale_rgb);
-
-        for (int x = width; x < width_out; x++) {
-          for (int c = 0; c < 3; c++) {
-            rgb_out[4 * (y * width_out + x) + c] = 255 * scale_rgb[c];
-          }
-          rgb_out[4 * (y * width_out + x) + 3] = 255;
+                for (int x = width; x < width_out; x++) {
+                    for (int c = 0; c < 3; c++) {
+                        rgb_out[4 * (y * width_out + x) + c]
+                            = 255 * scale_rgb[c];
+                    }
+                    rgb_out[4 * (y * width_out + x) + 3] = 255;
+                }
+            }
         }
-      }
-    }
 
-    lodepng::encode(filename_out, rgb_out, width_out, height);
-  }
+        lodepng::encode(filename_out, rgb_out, width_out, height);
+    }
 
 clean_exit:
-  delete[] rgb_out;
-  delete cmap;
-  delete image_1;
-  delete image_2;
+    delete[] rgb_out;
+    delete cmap;
+    delete image_1;
+    delete image_2;
 
 
-  return ret_val;
+    return ret_val;
 }

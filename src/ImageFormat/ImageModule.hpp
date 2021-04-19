@@ -28,17 +28,28 @@
 
 #pragma once
 
-class ColorMap 
+#include "XYZImage.hpp"
+#include "EXRImageFormat.hpp"
+
+class ImageModule
 {
-public:
-    ColorMap() {}
+    public:
+    static XYZImage* load(const std::string &filename, float exposure = 0.f) 
+    {
+        // Check if the filename size is long enough
+        if (filename.size() < 5) {
+            throw -1;
+        }
 
-    virtual ~ColorMap() {}
+        const char* filename_ext = &filename.c_str()[filename.size() - 4];
 
-    virtual void getRGBValue(float v, float RGB[3]) const = 0;
-
-    virtual void getRGBValue(float v, float v_min, float v_max, float RGB[3]) const = 0;
-    // {
-    //     getRGBValue((v - v_min) / (v_max - v_min), RGB);
-    // }
+        if (strcmp(filename_ext, ".exr") == 0 
+         || strcmp(filename_ext, ".EXR") == 0) {
+             return new EXRImageFormat(filename.c_str(), exposure);
+        } else {
+            std::cerr << "[error] Unknown file format " << filename_ext << std::endl;
+            std::cerr << "[error] Image name: " << filename << std::endl;
+            throw -2;
+        }
+    }
 };
