@@ -181,8 +181,10 @@ int main(int argc, char *argv[])
 
         // We need to determine the width of the output image depending on the
         // display of the color scale on the right or not
-        const size_t width_scale = 30;
-        const size_t width_out   = (displayScale) ? width + width_scale : width;
+        const float  scale_percent = 0.05f;
+        const size_t width_scale
+            = std::max(30, int(scale_percent * float(width)));
+        const size_t width_out = (displayScale) ? width + width_scale : width;
 
         rgb_out = new unsigned char[width_out * height * 4];
 
