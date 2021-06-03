@@ -117,12 +117,12 @@ Float deltaE2000(const Float Lab_1[3], const Float Lab_2[3])
 
     const Float bar_C_prime = (C_prime_1 + C_prime_2) / 2.;
 
-    Float h_prime_1 = std::atan2(a_prime_1, b1);
+    Float h_prime_1 = std::atan2(b1, a_prime_1);
     if (h_prime_1 < 0) {
         h_prime_1 += 2. * M_PI;
     }
 
-    Float h_prime_2 = std::atan2(a_prime_2, b2);
+    Float h_prime_2 = std::atan2(b2, a_prime_2);
     if (h_prime_2 < 0) {
         h_prime_2 += 2. * M_PI;
     }
