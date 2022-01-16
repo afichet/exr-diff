@@ -1,10 +1,15 @@
 # EXR Diff
 
-This is a very simple tool to generate a Delta E 2000 image difference between two EXR files.
+This is a very simple tool to generate a Delta E 2000 image difference between two EXR files using D65 white achromatic reference illuminant (CIE 1931 2°).
 
 It is meant to be compiled easily without any headache on any platform.
 
 It is **not** meant to be fancy or bloated.
+
+**Warning! This tool does not currently support:**
+
+- **Custom chromaticities: chromaticities specified in the EXR header will be ignored. Rec 709 is assumed. If you're using any other colorspace, the resulting Delta E will not be correct.**
+- **Luminance chrominance images.**
 
 ## Compilation
 Clone the repository:
