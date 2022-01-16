@@ -61,11 +61,16 @@ void xyz_to_Lab(const Float XYZ[3], Float Lab[3])
     const Float epsilon = 0.008856;
     const Float kappa   = 903.3;
 
+    // D65
+    const Float coefs[3] = {0.950489, 1., 1.08840};
+
     for (int i = 0; i < 3; i++) {
-        if (XYZ[i] > epsilon) {
-            f[i] = std::pow(XYZ[i], 1. / 3.);
+        Float t = XYZ[i] / coefs[i];
+
+        if (t > epsilon) {
+            f[i] = std::cbrt(t);
         } else {
-            f[i] = (kappa * XYZ[i] + 16.) / 116.;
+            f[i] = (kappa * t + 16.) / 116.;
         }
     }
 
