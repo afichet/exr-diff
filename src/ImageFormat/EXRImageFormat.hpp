@@ -40,7 +40,7 @@ class EXRImageFormat: public XYZImage
     EXRImageFormat(const char *filename, float exposureValue = 0.f)
       : XYZImage(0, 0)
     {
-        float *     rgba = nullptr;
+        float      *rgba = nullptr;
         int         width, height;
         const char *err = nullptr;
         int         ret = LoadEXR(&rgba, &width, &height, filename, &err);
