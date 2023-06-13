@@ -28,6 +28,9 @@
 
 #pragma once
 
+#include <stdexcept>
+#include <sstream>
+
 #include "XYZImage.hpp"
 
 #define TINYEXR_IMPLEMENTATION
@@ -43,16 +46,35 @@ class EXRImageFormat: public XYZImage
         float      *rgba = nullptr;
         int         width, height;
         const char *err = nullptr;
-        int         ret = LoadEXR(&rgba, &width, &height, filename, &err);
+        int         ret = 0;
+        EXRVersion  exr_version;
+
+        ret = ParseEXRVersionFromFile(&exr_version, filename);
 
         if (ret != TINYEXR_SUCCESS) {
-            std::cerr << "[error] cannot load file: " << filename << std::endl;
+            std::stringstream err_msg;
+            err_msg << "Invalid OpenEXR file: " << filename;
+            throw std::runtime_error(err_msg.str());
+        }
+
+        if (exr_version.multipart) {
+            std::stringstream err_msg;
+            err_msg << "Multipart OpenEXR files not supported: " << filename;
+            throw std::runtime_error(err_msg.str());
+        }
+
+        ret = LoadEXR(&rgba, &width, &height, filename, &err);;
+
+        if (ret != TINYEXR_SUCCESS) {
+            std::stringstream err_msg;
+            err_msg << "Cannot open OpenEXR file: " << filename;
+
             if (err) {
-                std::cerr << "[error] " << err << std::endl;
+                err_msg << "(" << err << ")";
                 FreeEXRErrorMessage(err);
             }
 
-            throw ret;
+            throw std::runtime_error(err_msg.str());
         }
 
         const float exposure_mul = std::exp2(exposureValue);

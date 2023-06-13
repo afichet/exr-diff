@@ -28,6 +28,9 @@
 
 #pragma once
 
+#include <sstream>
+#include <stdexcept>
+
 #include "XYZImage.hpp"
 #include "EXRImageFormat.hpp"
 
@@ -38,19 +41,20 @@ class ImageModule
     {
         // Check if the filename size is long enough
         if (filename.size() < 5) {
-            throw -1;
+            std::stringstream err_msg;
+            err_msg << "Cannot open file: " << filename << " (the file name is too short, it does not contains extension)";
+            throw std::runtime_error(err_msg.str());
         }
 
         const char *filename_ext = &filename.c_str()[filename.size() - 4];
 
-        if (strcmp(filename_ext, ".exr") == 0
+        if (   strcmp(filename_ext, ".exr") == 0
             || strcmp(filename_ext, ".EXR") == 0) {
             return new EXRImageFormat(filename.c_str(), exposure);
         } else {
-            std::cerr << "[error] Unknown file format " << filename_ext
-                      << std::endl;
-            std::cerr << "[error] Image name: " << filename << std::endl;
-            throw -2;
+            std::stringstream err_msg;
+            err_msg << "Cannot open file: " << filename << "(unknown file format: " << filename_ext << ")";
+            throw std::runtime_error(err_msg.str());
         }
     }
 };

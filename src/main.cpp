@@ -26,10 +26,12 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <iostream>
 #include <cstddef>
-#include <vector>
+#include <iostream>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
 
 #include "colortools.hpp"
 
@@ -124,38 +126,33 @@ int main(int argc, char *argv[])
 
     // Ensure the output file is in a PNG format
     if (filename_out.size() < 5) {
-        std::cerr << "[error] Wrong output filename: too short" << std::endl;
+        std::cerr << "[error] Wrong output filename: does not contain .png extension" << std::endl;
 
         return EXIT_FAILURE;
     }
 
-    {
-        const char *filename_out_ext
-            = &filename_out.c_str()[filename_out.size() - 4];
+    const char *filename_out_ext = &filename_out.c_str()[filename_out.size() - 4];
 
-        if (strcmp(filename_out_ext, ".png") != 0
-            && strcmp(filename_out_ext, ".PNG") != 0) {
-            std::cerr << "[error] Wrong file extension for output."
-                      << std::endl;
-            std::cerr << "[error] Supported extensions: .png, .PNG"
-                      << std::endl;
+    if (   strcmp(filename_out_ext, ".png") != 0
+        && strcmp(filename_out_ext, ".PNG") != 0) {
+        std::cerr << "[error] Wrong file extension for output." << std::endl;
+        std::cerr << "[error] Supported extensions: .png, .PNG" << std::endl;
 
-            return EXIT_FAILURE;
-        }
+        return EXIT_FAILURE;
     }
 
     // Load the two EXR files to compare
     try {
         image_1 = std::unique_ptr<XYZImage>(ImageModule::load(filename_1.c_str(), exposure));
         image_2 = std::unique_ptr<XYZImage>(ImageModule::load(filename_2.c_str(), exposure));
-    } catch (int e) {
-        std::cerr << "[error] Cannot load images." << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "[error] " << e.what() << std::endl;
 
         return EXIT_FAILURE;
     }
 
     // Ensure they have the same dimensions
-    if (image_1->width() != image_2->width()
+    if (   image_1->width()  != image_2->width()
         || image_2->height() != image_2->height()) {
         std::cerr << "[error] Image dimensions mismatch." << std::endl;
 
