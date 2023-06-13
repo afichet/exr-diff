@@ -28,6 +28,9 @@
 
 #include <iostream>
 #include <cstddef>
+#include <vector>
+#include <memory>
+
 #include "colortools.hpp"
 
 #include <lodepng.h>
@@ -38,8 +41,6 @@
 
 int main(int argc, char *argv[])
 {
-    int ret_val = 0;
-
     std::string filename_1;
     std::string filename_2;
     std::string filename_out;
@@ -50,12 +51,12 @@ int main(int argc, char *argv[])
     float exposure;
     bool  displayScale;
 
-    XYZImage *image_1 = nullptr;
-    XYZImage *image_2 = nullptr;
+    std::unique_ptr<XYZImage> image_1;
+    std::unique_ptr<XYZImage> image_2;
 
-    ColorMap *cmap = nullptr;
+    std::unique_ptr<ColorMap> cmap;
 
-    unsigned char *rgb_out = nullptr;
+    std::vector<unsigned char> rgb_out;
 
     // Parse command line
     try {
@@ -118,15 +119,14 @@ int main(int argc, char *argv[])
         std::cerr << "[error] " << e.error() << " for arg " << e.argId()
                   << std::endl;
 
-        ret_val = -1;
-        goto clean_exit;
+        return EXIT_FAILURE;
     }
 
     // Ensure the output file is in a PNG format
     if (filename_out.size() < 5) {
         std::cerr << "[error] Wrong output filename: too short" << std::endl;
-        ret_val = -2;
-        goto clean_exit;
+
+        return EXIT_FAILURE;
     }
 
     {
@@ -140,20 +140,18 @@ int main(int argc, char *argv[])
             std::cerr << "[error] Supported extensions: .png, .PNG"
                       << std::endl;
 
-            ret_val = -3;
-            goto clean_exit;
+            return EXIT_FAILURE;
         }
     }
 
     // Load the two EXR files to compare
     try {
-        image_1 = ImageModule::load(filename_1.c_str(), exposure);
-        image_2 = ImageModule::load(filename_2.c_str(), exposure);
+        image_1 = std::unique_ptr<XYZImage>(ImageModule::load(filename_1.c_str(), exposure));
+        image_2 = std::unique_ptr<XYZImage>(ImageModule::load(filename_2.c_str(), exposure));
     } catch (int e) {
         std::cerr << "[error] Cannot load images." << std::endl;
 
-        ret_val = -1;
-        goto clean_exit;
+        return EXIT_FAILURE;
     }
 
     // Ensure they have the same dimensions
@@ -161,18 +159,16 @@ int main(int argc, char *argv[])
         || image_2->height() != image_2->height()) {
         std::cerr << "[error] Image dimensions mismatch." << std::endl;
 
-        ret_val = -1;
-        goto clean_exit;
+        return EXIT_FAILURE;
     }
 
     // Create the colormap
     try {
-        cmap = ColorMapModule::create(colormap_name);
+        cmap = std::unique_ptr<ColorMap>(ColorMapModule::create(colormap_name));
     } catch (int e) {
         std::cerr << "[error] Cannot create the colormap." << std::endl;
 
-        ret_val = -1;
-        goto clean_exit;
+        return EXIT_FAILURE;
     }
 
     {
@@ -186,7 +182,7 @@ int main(int argc, char *argv[])
             = std::max(30, int(scale_percent * float(width)));
         const size_t width_out = (displayScale) ? width + width_scale : width;
 
-        rgb_out = new unsigned char[width_out * height * 4];
+        rgb_out.resize(width_out * height * 4);
 
         #pragma omp parallel for
         for (size_t i = 0; i < width * height; i++) {
@@ -232,15 +228,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        lodepng::encode(filename_out, rgb_out, width_out, height);
+        lodepng::encode(filename_out, rgb_out.data(), width_out, height);
     }
 
-clean_exit:
-    delete[] rgb_out;
-    delete cmap;
-    delete image_1;
-    delete image_2;
-
-
-    return ret_val;
+    return EXIT_SUCCESS;
 }
