@@ -20,8 +20,7 @@ cd exr-diff
 
 After cloning the repository, ensure you have the submodule:
 ```bash
-git submodule init
-git submodule update
+git submodule update --init --recursive
 ```
 
 Then, you're ready to compile
