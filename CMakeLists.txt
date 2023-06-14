@@ -8,8 +8,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(src)
+if (   NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/3rdparty/tinyexr/tinyexr.h"
+    OR NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/3rdparty/lodepng/lodepng.cpp"
+    OR NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/3rdparty/tclap/include")
+    message(SEND_ERROR
+        "Submodules are missing!\n"
+        "Try running `git submodule update --init --recursive`"
+    )
+endif()
 
+add_subdirectory(src)
 
 # set(ENABLE_TEST NO)
 set(ENABLE_TEST YES)
